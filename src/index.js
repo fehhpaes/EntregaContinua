@@ -24,3 +24,4 @@ app.get('/api/test-3', (req, res) => {
 module.exports = app;
 
 //subindo para realizar o passo de ajuste-urgente
+//subindo para teste de automação de tags
