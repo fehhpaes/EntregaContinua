@@ -32,7 +32,7 @@ jobs:
       - name: Checkout para Git Operations
         uses: actions/checkout@v2
         with:
-          token: ${{ secrets.GH_TOKEN }}
+          token: ${{ secrets.TOKEN_GITHUB }}
           fetch-depth: 0
 
       - name: Instalar semver
@@ -41,7 +41,7 @@ jobs:
       - name: Criar nova tag caso não exista
         id: create_initial_tag
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.TOKEN_GITHUB }}
         run: |
           if [ -z "$(git tag)" ]; then
             git config --global user.name 'github-actions'
@@ -54,7 +54,6 @@ jobs:
         id: version
         run: |
           git fetch --tags
-          # Pega a última tag ou define v0.0.0 se não existir
           LAST_TAG=$(git describe --tags `git rev-list --tags --max-count=1` 2>/dev/null || echo "v0.0.0")
           echo "Versão Atual: $LAST_TAG"
           
@@ -68,7 +67,6 @@ jobs:
           MINOR=0
           PATCH=0
           
-          # Lógica de análise de commits (Gitflow/SemVer)
           while read -r COMMIT; do
             if [[ "$COMMIT" == *"BREAKING CHANGE"* ]]; then MAJOR=1
             elif [[ "$COMMIT" == *"feat"* ]]; then MINOR=1
@@ -96,12 +94,12 @@ jobs:
           
       - name: Commit e push de nova versão
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.TOKEN_GITHUB }}
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
           git add package.json
-          # Evita erro se não houver mudanças no package.json
-          git commit -m "chore(release): version ${{ env.new_version }}" || echo "Sem mudanças para o commit"
+          # O [skip ci] abaixo evita o loop infinito de versões
+          git commit -m "chore(release): version ${{ env.new_version }} [skip ci]" || echo "Sem mudanças"
           git tag v${{ env.new_version }}
           git push origin main --tags
