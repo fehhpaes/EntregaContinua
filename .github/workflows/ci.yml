@@ -26,7 +26,7 @@ jobs:
 
       - name: Testes unitarios
         run: npm test
-        continue-on-error: true
+        # Removido o continue-on-error para que o pipeline pare e envie o e-mail em caso de erro
 
       # PARTE 2 - Automação de Versão e Tag
       - name: Checkout para Git Operations
@@ -99,7 +99,23 @@ jobs:
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
           git add package.json
-          # O [skip ci] abaixo evita o loop infinito de versões
           git commit -m "chore(release): version ${{ env.new_version }} [skip ci]" || echo "Sem mudanças"
           git tag v${{ env.new_version }}
           git push origin main --tags
+
+      # NOTIFICAÇÃO DE ERRO
+      - name: Enviar E-mail em caso de falha
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "❌ Falha no Pipeline: ${{ github.repository }}"
+          to: ${{ secrets.MAIL_DESTINATARIO }}
+          from: "GitHub Actions Bot"
+          body: |
+            O workflow de CI falhou!
+            Repositório: ${{ github.repository }}
+            Veja os detalhes do erro em: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
