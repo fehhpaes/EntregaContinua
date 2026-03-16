@@ -25,3 +25,4 @@ module.exports = app;
 
 //subindo para realizar o passo de ajuste-urgente
 //subindo para teste de automação de tags 
+// teste para verificar o funcionamento do pipeline de CI/CD
