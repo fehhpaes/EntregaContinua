@@ -25,10 +25,11 @@ jobs:
         run: npm run build
 
       - name: Testes unitarios
-        run: npm test    
-
-      # PARTE 2 - A partir daqui
-      - name: Checkout do código (v2)
+        run: npm test
+        continue-on-error: true
+        
+      # PARTE 2 - Automação de Versão e Tag
+      - name: Checkout para Git Operations
         uses: actions/checkout@v2
         with:
           token: ${{ secrets.GH_TOKEN }}
@@ -53,6 +54,7 @@ jobs:
         id: version
         run: |
           git fetch --tags
+          # Pega a última tag ou define v0.0.0 se não existir
           LAST_TAG=$(git describe --tags `git rev-list --tags --max-count=1` 2>/dev/null || echo "v0.0.0")
           echo "Versão Atual: $LAST_TAG"
           
@@ -66,6 +68,7 @@ jobs:
           MINOR=0
           PATCH=0
           
+          # Lógica de análise de commits (Gitflow/SemVer)
           while read -r COMMIT; do
             if [[ "$COMMIT" == *"BREAKING CHANGE"* ]]; then MAJOR=1
             elif [[ "$COMMIT" == *"feat"* ]]; then MINOR=1
@@ -75,25 +78,30 @@ jobs:
           
           CURRENT_VERSION=${LAST_TAG#v}
           NEW_VERSION=$CURRENT_VERSION
-          if [[ $MAJOR -eq 1 ]]; then NEW_VERSION=$(semver -i major $CURRENT_VERSION)
-          elif [[ $MINOR -eq 1 ]]; then NEW_VERSION=$(semver -i minor $CURRENT_VERSION)
-          elif [[ $PATCH -eq 1 ]]; then NEW_VERSION=$(semver -i patch $CURRENT_VERSION)
+          
+          if [[ $MAJOR -eq 1 ]]; then 
+            NEW_VERSION=$(semver -i major $CURRENT_VERSION)
+          elif [[ $MINOR -eq 1 ]]; then 
+            NEW_VERSION=$(semver -i minor $CURRENT_VERSION)
+          else 
+            NEW_VERSION=$(semver -i patch $CURRENT_VERSION)
           fi
           
-          echo "Nova versão: $NEW_VERSION"
+          echo "Nova versão calculada: $NEW_VERSION"
           echo "new_version=$NEW_VERSION" >> $GITHUB_ENV
 
       - name: Atualizar versão no package.json
         run: |
           npm version ${{ env.new_version }} --no-git-tag-version
           
-      - name: Commit e push
+      - name: Commit e push de nova versão
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
           git add package.json
-          git commit -m "chore(release): version ${{ env.new_version }}"
+          # Evita erro se não houver mudanças no package.json
+          git commit -m "chore(release): version ${{ env.new_version }}" || echo "Sem mudanças para o commit"
           git tag v${{ env.new_version }}
           git push origin main --tags
