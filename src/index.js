@@ -20,8 +20,8 @@ app.get('/api/test-2', (req, res) => {
 app.get('/api/test-3', (req, res) => {
   res.send({ message: 'Endpoint de teste 3'});
 });
-
+});
 module.exports = app;
 
 //subindo para realizar o passo de ajuste-urgente
-//subindo para teste de automação de tags
+//subindo para teste de automação de tags 
