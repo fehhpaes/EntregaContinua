@@ -16,7 +16,7 @@ jobs:
       - name: Configurar Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '22'
+          node-version: "22"
 
       - name: Instalar dependências
         run: npm install
@@ -27,12 +27,12 @@ jobs:
       - name: Testes unitarios
         run: npm test
         continue-on-error: true
-        
+
       # PARTE 2 - Automação de Versão e Tag
       - name: Checkout para Git Operations
         uses: actions/checkout@v2
         with:
-          token: ${{ secrets.TOKEN_GITHUB }}
+          token: ${{ secrets.GH_GITHUB }}
           fetch-depth: 0
 
       - name: Instalar semver
@@ -41,7 +41,7 @@ jobs:
       - name: Criar nova tag caso não exista
         id: create_initial_tag
         env:
-          GH_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+          GH_TOKEN: ${{ secrets.GH_GITHUB }}
         run: |
           if [ -z "$(git tag)" ]; then
             git config --global user.name 'github-actions'
@@ -56,27 +56,27 @@ jobs:
           git fetch --tags
           LAST_TAG=$(git describe --tags `git rev-list --tags --max-count=1` 2>/dev/null || echo "v0.0.0")
           echo "Versão Atual: $LAST_TAG"
-          
+
           if [ "$LAST_TAG" = "v0.0.0" ]; then
             COMMITS=$(git log --pretty=format:"%s")
           else
             COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"%s")
           fi
-          
+
           MAJOR=0
           MINOR=0
           PATCH=0
-          
+
           while read -r COMMIT; do
             if [[ "$COMMIT" == *"BREAKING CHANGE"* ]]; then MAJOR=1
             elif [[ "$COMMIT" == *"feat"* ]]; then MINOR=1
             elif [[ "$COMMIT" == *"fix"* ]]; then PATCH=1
             fi
           done <<< "$COMMITS"
-          
+
           CURRENT_VERSION=${LAST_TAG#v}
           NEW_VERSION=$CURRENT_VERSION
-          
+
           if [[ $MAJOR -eq 1 ]]; then 
             NEW_VERSION=$(semver -i major $CURRENT_VERSION)
           elif [[ $MINOR -eq 1 ]]; then 
@@ -84,17 +84,17 @@ jobs:
           else 
             NEW_VERSION=$(semver -i patch $CURRENT_VERSION)
           fi
-          
+
           echo "Nova versão calculada: $NEW_VERSION"
           echo "new_version=$NEW_VERSION" >> $GITHUB_ENV
 
       - name: Atualizar versão no package.json
         run: |
           npm version ${{ env.new_version }} --no-git-tag-version
-          
+
       - name: Commit e push de nova versão
         env:
-          GH_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+          GH_TOKEN: ${{ secrets.GH_GITHUB }}
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
