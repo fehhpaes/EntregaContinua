@@ -32,7 +32,7 @@ jobs:
       - name: Checkout para Git Operations
         uses: actions/checkout@v2
         with:
-          token: ${{ secrets.GH_GITHUB }}
+          token: ${{ secrets.GH_TOKEN }}
           fetch-depth: 0
 
       - name: Instalar semver
@@ -41,7 +41,7 @@ jobs:
       - name: Criar nova tag caso não exista
         id: create_initial_tag
         env:
-          GH_TOKEN: ${{ secrets.GH_GITHUB }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           if [ -z "$(git tag)" ]; then
             git config --global user.name 'github-actions'
@@ -94,7 +94,7 @@ jobs:
 
       - name: Commit e push de nova versão
         env:
-          GH_TOKEN: ${{ secrets.GH_GITHUB }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
