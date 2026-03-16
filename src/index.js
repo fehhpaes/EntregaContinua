@@ -7,7 +7,7 @@ app.use(express.json());
 
 app.get('/api', (req, res) => {
   res.send('Hello world!');
-
+});
 
 app.get('/api/test', (req, res) => {
   res.send({ message: 'Endpoint de teste'});
