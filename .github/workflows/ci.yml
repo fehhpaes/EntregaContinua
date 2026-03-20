@@ -114,5 +114,5 @@ jobs:
           password: ${{ secrets.MAIL_PASSWORD }}
           subject: "❌ Github Actions job result: Falha"
           to: ${{ secrets.MAIL_DESTINATARIO }}
-          from: "Fatec Votorantim - Github Actions"
+          from: "${{ secrets.MAIL_DESTINATARIO}} - Github Actions"
           body: "Ocorreu uma FALHA no build do repositorio ${{ github.repository }}! Verifique o log do Github Actions para corrigir o erro."
